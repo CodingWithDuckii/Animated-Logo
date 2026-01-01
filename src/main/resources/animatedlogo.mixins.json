@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.duckii.animatedlogo.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [],
+  "client": ["client.SplashOverlayMixin"],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

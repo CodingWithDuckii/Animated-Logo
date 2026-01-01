@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "animated-logo",
+  "version": "1.0.0",
+  "name": "AnimatedLogo",
+  "description": "Animated Mojang Logo Mod",
+  "authors": ["duckii"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/animated-logo/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.duckii.animatedlogo.AnimatedLogo"]
+  },
+  "mixins": ["animatedlogo.mixins.json"],
+  "accessWidener": "animated-logo.accesswidener",
+  "depends": {
+    "fabricloader": "*",
+    "minecraft": "1.21.11"
+  }
+}

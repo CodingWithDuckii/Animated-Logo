@@ -1,0 +1,11 @@
+{
+  "startup": {
+    "category": "master",
+    "sounds": [
+      {
+        "name": "animated-logo:logo",
+        "stream": false
+      }
+    ]
+  }
+}

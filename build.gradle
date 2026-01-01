@@ -1,0 +1,68 @@
+plugins {
+    id 'fabric-loom' version '1.7.4'
+    id 'maven-publish'
+}
+
+group = 'com.duckii.animatedlogo'
+version = '1.0.0'
+base.archivesName = 'AnimatedLogoFabric'
+
+repositories {
+    mavenCentral()
+    maven { url = "https://maven.fabricmc.net/" }
+    maven { url = "https://libraries.minecraft.net/" }
+}
+
+dependencies {
+    // Minecraft and Mappings
+    minecraft "com.mojang:minecraft:1.21.11"
+    mappings "net.fabricmc:yarn:1.21.11+build.3"
+
+    // Fabric Loader and API
+    modImplementation "net.fabricmc:fabric-loader:0.16.9" 
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.release = 21
+    it.options.encoding = "UTF-8"
+}
+
+loom {
+    accessWidenerPath = file("src/main/resources/animated-logo.accesswidener")
+
+    runs {
+        client {
+            client()
+            name "Minecraft Client"
+            vmArg "-Dmixin.debug.export=true"
+        }
+        server {
+            server()
+            name "Minecraft Server"
+        }
+    }
+}
+
+processResources {
+    inputs.property "version", project.version
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Implementation-Title": project.name,
+            "Implementation-Version": project.version
+        )
+    }
+}
