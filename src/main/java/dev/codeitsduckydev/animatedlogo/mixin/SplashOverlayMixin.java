@@ -37,6 +37,9 @@ public class SplashOverlayMixin {
     @Unique private static final int FRAMES_PER_FRAME = 2;
     @Unique private float f = 0;
     @Unique private boolean animationDone = false;
+    @Unique private long postAnimationFadeStartTime = -1;
+    @Unique private static final long POST_ANIMATION_FADE_DURATION_MS = 1000;
+    @Unique private boolean postAnimationFadeDone = false;
 
     @Shadow
     @Final
@@ -150,6 +153,12 @@ public class SplashOverlayMixin {
         if (!animationDone) {
             drawAnimatedIntro(context);
             ci.cancel();
+            return;
+        }
+
+        if (!postAnimationFadeDone) {
+            drawPostAnimationFade(context);
+            ci.cancel();
         }
     }
 
@@ -221,6 +230,10 @@ public class SplashOverlayMixin {
             if (animationProgress >= 1.0) {
                 animationDone = true;
                 count = totalFrameCount - 1;
+                if (postAnimationFadeStartTime == -1) {
+                    postAnimationFadeStartTime = System.currentTimeMillis();
+                    postAnimationFadeDone = false;
+                }
             }
 
             int screenWidth = context.getScaledWindowWidth();
@@ -240,6 +253,38 @@ public class SplashOverlayMixin {
             context.drawTexture(RenderPipelines.GUI_TEXTURED, frames[frameIndex], x, y,
                     0, subFrameY, width, height,
                     1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), 1.0f));
+        }
+    }
+
+    @Unique
+    private void drawPostAnimationFade(DrawContext context) {
+        if (postAnimationFadeStartTime == -1) {
+            postAnimationFadeStartTime = System.currentTimeMillis();
+        }
+
+        long elapsed = System.currentTimeMillis() - postAnimationFadeStartTime;
+        float fade = 1.0f - MathHelper.clamp((float) elapsed / POST_ANIMATION_FADE_DURATION_MS, 0.0f, 1.0f);
+
+        context.fill(RenderPipelines.GUI, 0, 0,
+                context.getScaledWindowWidth(), context.getScaledWindowHeight(),
+                applyAlphaToColor(BRAND_ARGB.getAsInt(), fade));
+
+        int screenWidth = context.getScaledWindowWidth();
+        int screenHeight = context.getScaledWindowHeight();
+        int width = screenWidth / 2;
+        int height = width * 256 / 1024;
+        int x = (screenWidth - width) / 2;
+        int y = (screenHeight - height) / 2;
+        int finalSubFrameY = 256 * ((count % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
+
+        Identifier finalFrame = frames[FRAMES - 1];
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, finalFrame, x, y,
+                0, finalSubFrameY, width, height,
+                1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), fade));
+
+        if (fade <= 0.0f) {
+            postAnimationFadeDone = true;
+            HAS_LOADED_ONCE = true;
         }
     }
 
