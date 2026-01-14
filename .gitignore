@@ -1,0 +1,91 @@
+# User-specific stuff
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# IntelliJ
+out/
+# mpeltonen/sbt-idea plugin
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Compiled class files
+*.class
+
+# Log files
+*.log
+
+# BlueJ files
+*.ctxt
+
+# Package files
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# JVM crash logs
+hs_err_pid*
+
+# Temporary files
+*~
+.fuse_hidden*
+
+# Linux trash
+.directory
+.Trash-*
+.nfs*
+
+# macOS files
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows files
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Gradle and build
+.gradle
+.gradle-local/
+.gradle-temp/
+build/
+**/build/
+gradle-app.setting
+.gradletasknamecache
+run/
+runs/
+
+# Avoid ignoring Gradle wrapper jar
+!gradle-wrapper.jar
