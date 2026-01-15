@@ -253,6 +253,7 @@ public class SplashOverlayMixin {
             context.drawTexture(RenderPipelines.GUI_TEXTURED, frames[frameIndex], x, y,
                     0, subFrameY, width, height,
                     1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), 1.0f));
+
         }
     }
 
@@ -297,16 +298,6 @@ public class SplashOverlayMixin {
                                    @Local(ordinal = 0) double height, @Local(ordinal = 6) int halfHeight,
                                    @Local(ordinal = 1) double width, @Local(ordinal = 7) int halfWidth) {
         if (!animationDone || HAS_LOADED_ONCE) return;
-
-        // Studios.png
-        float progress = MathHelper.clamp(this.progress * 0.95F + this.reload.getProgress() * 0.050000012F, 0.0F, 1.0F);
-        if (progress >= 0.8) {
-            f = Math.min(alpha, f + 0.2f);
-            int sw = (int) (width * 0.45);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of("animated-mojang-logo", "textures/gui/studios.png"),
-                    x - sw / 2, (int) (y - halfHeight + height - height / 12),
-                    0, 0, sw, (int) (height / 5.0), 450, 50, 512, 512, applyAlphaToColor(TEXT_COLOR.getAsInt(), f));
-        }
 
         // Title (last frame)
         int finalFrameScreenWidth = context.getScaledWindowWidth();

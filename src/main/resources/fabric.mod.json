@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "animated-mojang-logo",
   "version": "1.2",
-  "name": "Animated Logo By code_itsduckydev",
+  "name": "Animated Logo",
   "authors": [
     "code_itsduckydev"
   ],
@@ -13,7 +13,7 @@
     "homepage": "https://github.com/CodingWithDuckii/Animated-Logo",
     "sources": "https://github.com/CodingWithDuckii/Animated-Logo"
   },
-  "license": "ZLIB",
+  "license": "Apache-2.0",
   "icon": "assets/animated-mojang-logo/icon.png",
  "environment": "client",
   "entrypoints": {
