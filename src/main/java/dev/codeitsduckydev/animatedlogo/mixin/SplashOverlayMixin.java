@@ -157,7 +157,7 @@ public class SplashOverlayMixin {
         }
 
         if (!postAnimationFadeDone) {
-            drawPostAnimationFade(context);
+            drawPostAnimationFade(context, mouseX, mouseY, delta);
             ci.cancel();
         }
     }
@@ -258,9 +258,14 @@ public class SplashOverlayMixin {
     }
 
     @Unique
-    private void drawPostAnimationFade(DrawContext context) {
+    private void drawPostAnimationFade(DrawContext context, int mouseX, int mouseY, float delta) {
         if (postAnimationFadeStartTime == -1) {
             postAnimationFadeStartTime = System.currentTimeMillis();
+        }
+
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.currentScreen != null) {
+            client.currentScreen.render(context, mouseX, mouseY, delta);
         }
 
         long elapsed = System.currentTimeMillis() - postAnimationFadeStartTime;
@@ -286,6 +291,7 @@ public class SplashOverlayMixin {
         if (fade <= 0.0f) {
             postAnimationFadeDone = true;
             HAS_LOADED_ONCE = true;
+            MinecraftClient.getInstance().setOverlay(null);
         }
     }
 
