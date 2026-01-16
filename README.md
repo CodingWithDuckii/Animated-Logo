@@ -5,9 +5,7 @@ This Fabric mod replaces the default **Mojang Studios boot screen** with the **M
 Instead of the standard Mojang intro, the game plays the Dungeons-style logo animation during startup, giving Minecraft a unique and cinematic launch experience.
 
 ---
-
-<iframe width="560" height="315" src="https://www.youtube-nocookie.com/embed/ZVUyWBHX5bg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
+https://www.youtube.com/watch?v=VK63zBqZGKg
 ---
 
 ## ✨ What This Mod Does
