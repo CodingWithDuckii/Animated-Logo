@@ -1,7 +1,20 @@
+buildscript {
+    repositories {
+        maven {
+            url = 'https://maven.fabricmc.net/'
+        }
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "net.fabricmc:fabric-loom:1.10.5"
+    }
+}
+
 plugins {
-    id 'fabric-loom' version '1.14-SNAPSHOT'
     id 'maven-publish'
 }
+
+apply plugin: 'fabric-loom'
 
 version = project.mod_version
 group = project.maven_group
@@ -90,8 +103,4 @@ publishing {
         // The repositories here will be used for publishing your artifact, not for
         // retrieving dependencies.
     }
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/animated-logo.accesswidener")
 }
