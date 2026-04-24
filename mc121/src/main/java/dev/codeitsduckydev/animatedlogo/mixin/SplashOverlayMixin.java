@@ -1,7 +1,6 @@
 package dev.codeitsduckydev.animatedlogo.mixin;
 
 import dev.codeitsduckydev.animatedlogo.AnimatedLogo;
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.SplashOverlay;
@@ -326,4 +325,3 @@ public class SplashOverlayMixin {
         return (a << 24) | rgb;
     }
 }
-
