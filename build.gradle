@@ -99,6 +99,9 @@ publishing {
     }
 }
 
+// No longer using accessWidener as it's not needed and causes issues on 26.1+
+/*
 loom {
     accessWidenerPath = file("src/main/resources/animated-logo.accesswidener")
 }
+*/
