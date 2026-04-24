@@ -13,12 +13,12 @@ public class AnimatedLogo implements ModInitializer {
     public static final String MOD_ID = "animated-mojang-logo";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public static final Identifier STARTUP_SOUND_ID = Identifier.of("animated-mojang-logo", "startup");
+    public static final Identifier STARTUP_SOUND_ID = Identifier.of(MOD_ID, "startup");
     public static final SoundEvent STARTUP_SOUND_EVENT = SoundEvent.of(STARTUP_SOUND_ID);
 
     @Override
     public void onInitialize() {
-        LOGGER.info("Initializing Startup Animation");
+        LOGGER.info("Initializing Animated Logo v1.5...");
         Registry.register(Registries.SOUND_EVENT, STARTUP_SOUND_ID, STARTUP_SOUND_EVENT);
     }
 }

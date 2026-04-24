@@ -16,7 +16,7 @@
   },
   "license": "Apache-2.0",
   "icon": "assets/animated-mojang-logo/icon.png",
- "environment": "client",
+  "environment": "client",
   "entrypoints": {
     "main": [
       "dev.codeitsduckydev.animatedlogo.AnimatedLogo"

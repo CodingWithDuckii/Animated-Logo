@@ -7,8 +7,9 @@ We're excited to announce the release of **Animated Logo v1.5**! 🚀 This updat
 ### What's New:
 - **New Main Icon:** We've updated our mod icon to a sleek new design! 🎨 Check it out on [Modrinth](https://modrinth.com/mod/animated-mojang-logo).
 - **Version Bump:** Now officially at version 1.5. 📈
-- **Minecraft 26.1 Support:** Fully compatible with the latest Minecraft version 26.1 (Tiny Takeover) and higher! 🚀
-- **Improved Compatibility:** Refactored rendering code to support both legacy and new Minecraft APIs. 🛠️
+- **Minecraft 26.1+ Support:** Fully compatible with the latest Minecraft version 26.1 (Tiny Takeover) and higher! 🚀
+- **Bug Fixes:** Resolved a critical crash on startup related to access wideners and namespace mismatches in newer Minecraft versions. 🛠️
+- **Improved Compatibility:** Refactored rendering code to support both legacy and new Minecraft APIs. ✨
 - **Internal Cleanups:** Minor optimizations for better performance. ⚡
 
 Thank you to the community for your continued support and feedback! ❤️ We hope you enjoy the fresh new look of Animated Logo. 🌟
