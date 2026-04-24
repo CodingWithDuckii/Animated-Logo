@@ -23,7 +23,7 @@ import java.util.function.IntSupplier;
 
 import static dev.codeitsduckydev.animatedlogo.AnimatedLogo.LOGGER;
 
-@Mixin(SplashOverlay.class)
+@Mixin(targets = "net.minecraft.client.gui.screen.SplashOverlay")
 @SuppressWarnings({"unused", "FieldMayBeFinal"})
 public class SplashOverlayMixin {
     @Mutable
@@ -192,7 +192,7 @@ public class SplashOverlayMixin {
             if (!inited) {
                 this.frames = new Identifier[FRAMES];
                 for (int i = 0; i < FRAMES; i++) {
-                    this.frames[i] = Identifier.of("animated-mojang-logo", "textures/gui/frame_" + i + ".png");
+                    this.frames[i] = VersionedRenderer.createIdentifier("animated-mojang-logo", "textures/gui/frame_" + i + ".png");
                 }
                 inited = true;
             }

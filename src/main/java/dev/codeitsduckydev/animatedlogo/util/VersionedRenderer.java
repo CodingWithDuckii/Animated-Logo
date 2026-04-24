@@ -11,12 +11,21 @@ import java.lang.reflect.Method;
 public class VersionedRenderer {
     private static MethodHandle DRAW_TEXTURE_MH;
     private static MethodHandle SET_SHADER_COLOR_MH;
+    private static MethodHandle IDENTIFIER_OF_MH;
     private static Object GUI_TEXTURED_PIPELINE;
     private static boolean IS_NEW_API = false;
 
     static {
         MethodHandles.Lookup lookup = MethodHandles.lookup();
         try {
+            // Try to find Identifier.of (1.21+)
+            try {
+                IDENTIFIER_OF_MH = lookup.findStatic(Identifier.class, "of", 
+                    MethodType.methodType(Identifier.class, String.class, String.class));
+            } catch (NoSuchMethodException e) {
+                // Fallback to constructor or other method if needed, but Identifier.of is standard in 1.21
+            }
+
             // Try to find DrawContext.setShaderColor (1.21.2+)
             try {
                 SET_SHADER_COLOR_MH = lookup.findVirtual(DrawContext.class, "setShaderColor", 
@@ -46,6 +55,17 @@ public class VersionedRenderer {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public static Identifier createIdentifier(String namespace, String path) {
+        try {
+            if (IDENTIFIER_OF_MH != null) {
+                return (Identifier) IDENTIFIER_OF_MH.invoke(namespace, path);
+            }
+        } catch (Throwable e) {
+            e.printStackTrace();
+        }
+        return Identifier.of(namespace, path); // Final fallback
     }
 
     public static void setShaderColor(DrawContext context, float r, float g, float b, float a) {
