@@ -1,8 +1,9 @@
 {
   "schemaVersion": 1,
   "id": "animated-mojang-logo",
-  "version": "1.3",
+  "version": "1.5",
   "name": "Animated Logo",
+  "description": "! `https://cdn.modrinth.com/data/cached_images/4446cf8c0e1b1f12adfbe9ca62d302cd4d6558fb.png` Adds an animated Mojang Studios logo to the splash screen.",
   "authors": [
     "code_itsduckydev"
   ],
