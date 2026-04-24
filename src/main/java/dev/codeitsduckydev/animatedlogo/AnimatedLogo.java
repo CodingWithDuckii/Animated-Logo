@@ -22,6 +22,7 @@ public class AnimatedLogo implements ModInitializer {
     @Override
     public void onInitialize() {
         LOGGER.info("Initializing Animated Logo v1.5...");
+        LOGGER.info("Runtime Namespace: " + (System.getProperty("fabric.development") != null ? "Development" : "Production/Official"));
         try {
             STARTUP_SOUND_ID = VersionedRenderer.createIdentifier(MOD_ID, "startup");
             // SoundEvent.of(Identifier)

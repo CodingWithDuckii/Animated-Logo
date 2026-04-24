@@ -3,27 +3,6 @@ package dev.codeitsduckydev.animatedlogo.mixin;
 import dev.codeitsduckydev.animatedlogo.AnimatedLogo;
 import dev.codeitsduckydev.animatedlogo.util.ColorUtils;
 import dev.codeitsduckydev.animatedlogo.util.VersionedRenderer;
-import com.llamalad7.mixinextras.sugar.Local;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.SplashOverlay;
-import net.minecraft.client.sound.*;
-import net.minecraft.resource.ResourceReload;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
-import net.minecraft.util.math.MathHelper;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import java.util.function.Consumer;
-import java.util.function.IntSupplier;
-
-import static dev.codeitsduckydev.animatedlogo.AnimatedLogo.LOGGER;
-
-import net.minecraft.client.gui.screen.Overlay;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.sound.*;
@@ -40,13 +19,11 @@ import java.util.function.IntSupplier;
 
 import static dev.codeitsduckydev.animatedlogo.AnimatedLogo.LOGGER;
 
-@Mixin(Overlay.class)
+@Mixin(targets = {"net.minecraft.client.gui.screen.SplashOverlay", "net.minecraft.class_425"})
 @SuppressWarnings({"unused", "FieldMayBeFinal"})
 public class SplashOverlayMixin {
     @Unique private ResourceReload reloadField;
     @Unique private boolean fieldsInited = false;
-    @Unique private boolean isSplashOverlay = false;
-    @Unique private boolean checkedType = false;
 
     @Unique private int count = 0;
     @Unique private Identifier[] frames;
@@ -88,21 +65,15 @@ public class SplashOverlayMixin {
 
     @Unique
     private void initFields(Object instance) {
-        if (!checkedType) {
-            String className = instance.getClass().getName();
-            // Check if it's SplashOverlay (Official or Intermediary name)
-            isSplashOverlay = className.endsWith(".SplashOverlay") || className.endsWith(".class_425");
-            checkedType = true;
-        }
-
-        if (!isSplashOverlay || fieldsInited) return;
-
+        if (fieldsInited) return;
+        LOGGER.info("Initializing SplashOverlay fields for: " + instance.getClass().getName());
         try {
             // Try to find 'reload' field (ResourceReload)
             for (java.lang.reflect.Field field : instance.getClass().getDeclaredFields()) {
                 if (ResourceReload.class.isAssignableFrom(field.getType())) {
                     field.setAccessible(true);
                     this.reloadField = (ResourceReload) field.get(instance);
+                    LOGGER.info("Found reload field: " + field.getName());
                     break;
                 }
             }
@@ -148,12 +119,12 @@ public class SplashOverlayMixin {
             return;
         }
 
-        initFields(this);
-        if (!isSplashOverlay) return;
-
         if (animationDelayStartTime == -1) {
+            LOGGER.info("Starting animation sequence");
             animationDelayStartTime = System.currentTimeMillis();
         }
+
+        initFields(this);
 
         long elapsed = System.currentTimeMillis() - animationDelayStartTime;
 
@@ -196,6 +167,7 @@ public class SplashOverlayMixin {
         }
 
         if (reloadComplete && !isFadingOut && !isFadingFinished) {
+            LOGGER.info("Reload complete, starting fade out");
             isFadingOut = true;
             fadeOutStartTime = System.currentTimeMillis();
         }
@@ -212,6 +184,7 @@ public class SplashOverlayMixin {
             loadingBarProgress = reloadProgress;
 
             if (fadeFactor <= 0.0) {
+                LOGGER.info("Fade out finished, preparing animation");
                 isFadingFinished = true;
             }
 
@@ -235,6 +208,7 @@ public class SplashOverlayMixin {
             }
 
             if (!inited) {
+                LOGGER.info("Loading animation frames");
                 this.frames = new Identifier[FRAMES];
                 for (int i = 0; i < FRAMES; i++) {
                     this.frames[i] = VersionedRenderer.createIdentifier("animated-mojang-logo", "textures/gui/frame_" + i + ".png");
@@ -251,6 +225,7 @@ public class SplashOverlayMixin {
             count = (int)(animationProgress * totalFrameCount);
 
             if (animationProgress >= 1.0) {
+                LOGGER.info("Animation finished, starting post-animation fade");
                 animationDone = true;
                 count = totalFrameCount - 1;
                 if (postAnimationFadeStartTime == -1) {
@@ -319,6 +294,7 @@ public class SplashOverlayMixin {
         VersionedRenderer.setShaderColor(context, 1.0f, 1.0f, 1.0f, 1.0f);
 
         if (fade <= 0.0f) {
+            LOGGER.info("Post-animation fade finished");
             postAnimationFadeDone = true;
             HAS_LOADED_ONCE = true;
             MinecraftClient.getInstance().setOverlay(null);
