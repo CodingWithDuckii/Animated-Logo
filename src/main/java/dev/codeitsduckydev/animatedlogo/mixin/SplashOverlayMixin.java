@@ -23,12 +23,11 @@ import java.util.function.IntSupplier;
 
 import static dev.codeitsduckydev.animatedlogo.AnimatedLogo.LOGGER;
 
-@Mixin(targets = "net.minecraft.client.gui.screen.SplashOverlay")
+@Mixin(targets = {"net.minecraft.class_425", "net.minecraft.client.gui.screen.SplashOverlay"})
 @SuppressWarnings({"unused", "FieldMayBeFinal"})
 public class SplashOverlayMixin {
-    @Mutable
-    @Shadow @Final private ResourceReload reload;
-    @Shadow private float progress;
+    @Unique private ResourceReload reloadField;
+    @Unique private boolean fieldsInited = false;
 
     @Unique private int count = 0;
     @Unique private Identifier[] frames;
@@ -42,9 +41,9 @@ public class SplashOverlayMixin {
     @Unique private static final long POST_ANIMATION_FADE_DURATION_MS = 1000;
     @Unique private boolean postAnimationFadeDone = false;
 
-    @Shadow
-    @Final
-    private static IntSupplier BRAND_ARGB; // Color of background
+    @Unique
+    private static final int MOJANG_RED = 0xFFEF323D; // Standard Mojang background color
+
     @Unique
     private static int whiteARGB = ColorHelper.getArgb(255, 255, 255, 255);
 
@@ -52,10 +51,6 @@ public class SplashOverlayMixin {
     private static IntSupplier LOADING_FILL = () -> whiteARGB;
     @Unique
     private static IntSupplier LOADING_BORDER = () -> whiteARGB;
-
-    @Unique
-    private static IntSupplier TEXT_COLOR = () -> ColorUtils.applyAlphaToColor(whiteARGB, 1.0f);
-
 
     @Unique private boolean soundPlayed = false;
     @Unique private boolean animationReady = false;
@@ -71,6 +66,24 @@ public class SplashOverlayMixin {
     @Unique private static float loadingBarProgress = 0.0f; // in seconds
 
     @Unique private static boolean HAS_LOADED_ONCE = false;
+
+    @Unique
+    private void initFields(Object instance) {
+        if (fieldsInited) return;
+        try {
+            // Try to find 'reload' field (ResourceReload)
+            for (java.lang.reflect.Field field : instance.getClass().getDeclaredFields()) {
+                if (ResourceReload.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    this.reloadField = (ResourceReload) field.get(instance);
+                    break;
+                }
+            }
+        } catch (Throwable t) {
+            LOGGER.error("Failed to initialize SplashOverlay fields via reflection", t);
+        }
+        fieldsInited = true;
+    }
 
     // Draw vanilla loading bar
     // Copied from: net.minecraft.client.gui.screen.SplashOverlay.renderProgressBar
@@ -102,20 +115,17 @@ public class SplashOverlayMixin {
         context.fill(maxX, minY, maxX - 1, maxY, colorOutline);
     }
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void init(MinecraftClient client, ResourceReload monitor, Consumer<Throwable> exceptionHandler, boolean reloading, CallbackInfo ci) {
-        if (HAS_LOADED_ONCE) {
-            LOGGER.warn("Animated Mojang Logo has already been loaded once, skipping initialization.");
-            return;
-        }
-        animationDelayStartTime = System.currentTimeMillis();
-    }
-
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void preRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (HAS_LOADED_ONCE) {
             return;
         }
+
+        if (animationDelayStartTime == -1) {
+            animationDelayStartTime = System.currentTimeMillis();
+        }
+
+        initFields(this);
 
         long elapsed = System.currentTimeMillis() - animationDelayStartTime;
 
@@ -123,7 +133,7 @@ public class SplashOverlayMixin {
             VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
                     ColorHelper.withAlpha((int)((elapsed * 255) / ANIMATION_DELAY_MS / 10),
-                            ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f)));
+                            ColorUtils.applyAlphaToColor(MOJANG_RED, 1.0f)));
             ci.cancel();
             return;
         }
@@ -142,19 +152,22 @@ public class SplashOverlayMixin {
 
     @Unique
     private void drawAnimatedIntro(DrawContext context) {
-        if (!reload.isComplete() && !isFadingOut && !isFadingFinished) {
+        float reloadProgress = reloadField != null ? reloadField.getProgress() : 1.0f;
+        boolean reloadComplete = reloadField != null ? reloadField.isComplete() : true;
+
+        if (!reloadComplete && !isFadingOut && !isFadingFinished) {
 
             VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                    ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+                    ColorUtils.applyAlphaToColor(MOJANG_RED, 1.0f));
 
-            drawLoadingBar(context, 1.0f, Math.max(loadingBarProgress, reload.getProgress()));
-            loadingBarProgress = reload.getProgress();
+            drawLoadingBar(context, 1.0f, Math.max(loadingBarProgress, reloadProgress));
+            loadingBarProgress = reloadProgress;
 
             return;
         }
 
-        if (reload.isComplete() && !isFadingOut && !isFadingFinished) {
+        if (reloadComplete && !isFadingOut && !isFadingFinished) {
             isFadingOut = true;
             fadeOutStartTime = System.currentTimeMillis();
         }
@@ -165,10 +178,10 @@ public class SplashOverlayMixin {
 
             VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                    ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+                    ColorUtils.applyAlphaToColor(MOJANG_RED, 1.0f));
 
             drawLoadingBar(context, fadeFactor, 1.0f);
-            loadingBarProgress = reload.getProgress();
+            loadingBarProgress = reloadProgress;
 
             if (fadeFactor <= 0.0) {
                 isFadingFinished = true;
@@ -182,10 +195,14 @@ public class SplashOverlayMixin {
             animationStartTime = System.nanoTime();
 
             if (!soundPlayed) {
-                MinecraftClient.getInstance().getSoundManager().play(
-                        PositionedSoundInstance.master(AnimatedLogo.STARTUP_SOUND_EVENT, 1.0F)
-                );
-                LOGGER.info("Playing startup sound");
+                try {
+                    MinecraftClient.getInstance().getSoundManager().play(
+                            PositionedSoundInstance.master(AnimatedLogo.STARTUP_SOUND_EVENT, 1.0F)
+                    );
+                    LOGGER.info("Playing startup sound");
+                } catch (Throwable t) {
+                    LOGGER.error("Failed to play startup sound", t);
+                }
                 soundPlayed = true;
             }
 
@@ -226,7 +243,7 @@ public class SplashOverlayMixin {
 
             VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                    ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+                    ColorUtils.applyAlphaToColor(MOJANG_RED, 1.0f));
 
             VersionedRenderer.setShaderColor(context, 1.0f, 1.0f, 1.0f, 1.0f);
             VersionedRenderer.drawTexture(context, frames[frameIndex], x, y,
@@ -244,7 +261,11 @@ public class SplashOverlayMixin {
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.currentScreen != null) {
-            client.currentScreen.render(context, mouseX, mouseY, delta);
+            try {
+                client.currentScreen.render(context, mouseX, mouseY, delta);
+            } catch (Throwable t) {
+                // Ignore if screen rendering fails during fade
+            }
         }
 
         long elapsed = System.currentTimeMillis() - postAnimationFadeStartTime;
@@ -252,7 +273,7 @@ public class SplashOverlayMixin {
 
         VersionedRenderer.fill(context, 0, 0,
                 context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), fade));
+                ColorUtils.applyAlphaToColor(MOJANG_RED, fade));
 
         int screenWidth = context.getScaledWindowWidth();
         int screenHeight = context.getScaledWindowHeight();
