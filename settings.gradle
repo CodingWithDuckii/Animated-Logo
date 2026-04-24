@@ -6,4 +6,17 @@ pluginManagement {
         }
         gradlePluginPortal()
     }
+    resolutionStrategy {
+        eachPlugin {
+            if (requested.id.id == 'fabric-loom' ||
+                    requested.id.id == 'net.fabricmc.fabric-loom' ||
+                    requested.id.id == 'net.fabricmc.fabric-loom-remap') {
+                useModule("net.fabricmc:fabric-loom:${requested.version}")
+            }
+        }
+    }
 }
+
+rootProject.name = 'Animated-Logo'
+
+include('mc121', 'mc26')
