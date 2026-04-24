@@ -30,6 +30,13 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 processResources {
@@ -92,6 +99,9 @@ publishing {
     }
 }
 
+// No longer using accessWidener as it's not needed and causes issues on 26.1+
+/*
 loom {
     accessWidenerPath = file("src/main/resources/animated-logo.accesswidener")
 }
+*/

@@ -20,7 +20,7 @@ https://www.youtube.com/watch?v=VK63zBqZGKg
 - **Mod Loader:** Fabric
 - **Type:** Visual / Cosmetic
 - **Affects:** Game startup (boot screen only)
-- 
+
 ---
 
 ## 📦 Installation
