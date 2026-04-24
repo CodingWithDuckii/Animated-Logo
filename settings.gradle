@@ -8,7 +8,9 @@ pluginManagement {
     }
     resolutionStrategy {
         eachPlugin {
-            if (requested.id.id == 'fabric-loom') {
+            if (requested.id.id == 'fabric-loom' ||
+                    requested.id.id == 'net.fabricmc.fabric-loom' ||
+                    requested.id.id == 'net.fabricmc.fabric-loom-remap') {
                 useModule("net.fabricmc:fabric-loom:${requested.version}")
             }
         }

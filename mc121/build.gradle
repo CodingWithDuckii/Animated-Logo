@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.13.3'
+    id 'net.fabricmc.fabric-loom-remap' version '1.15.3'
     id 'maven-publish'
 }
 
@@ -26,7 +26,8 @@ dependencies {
     mappings "net.fabricmc:yarn:${project.yarn_mappings_121}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version_121}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version_121}"
-    include(implementation("com.llamalad7.mixinextras:mixinextras-fabric:0.5.4"))
+    modImplementation "com.llamalad7.mixinextras:mixinextras-fabric:0.5.4"
+    include "com.llamalad7.mixinextras:mixinextras-fabric:0.5.4"
 }
 
 sourceSets {
