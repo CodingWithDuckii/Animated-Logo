@@ -23,11 +23,30 @@ import java.util.function.IntSupplier;
 
 import static dev.codeitsduckydev.animatedlogo.AnimatedLogo.LOGGER;
 
-@Mixin(targets = {"net.minecraft.class_425", "net.minecraft.client.gui.screen.SplashOverlay"})
+import net.minecraft.client.gui.screen.Overlay;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.sound.*;
+import net.minecraft.resource.ResourceReload;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.ColorHelper;
+import net.minecraft.util.math.MathHelper;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.function.IntSupplier;
+
+import static dev.codeitsduckydev.animatedlogo.AnimatedLogo.LOGGER;
+
+@Mixin(Overlay.class)
 @SuppressWarnings({"unused", "FieldMayBeFinal"})
 public class SplashOverlayMixin {
     @Unique private ResourceReload reloadField;
     @Unique private boolean fieldsInited = false;
+    @Unique private boolean isSplashOverlay = false;
+    @Unique private boolean checkedType = false;
 
     @Unique private int count = 0;
     @Unique private Identifier[] frames;
@@ -69,7 +88,15 @@ public class SplashOverlayMixin {
 
     @Unique
     private void initFields(Object instance) {
-        if (fieldsInited) return;
+        if (!checkedType) {
+            String className = instance.getClass().getName();
+            // Check if it's SplashOverlay (Official or Intermediary name)
+            isSplashOverlay = className.endsWith(".SplashOverlay") || className.endsWith(".class_425");
+            checkedType = true;
+        }
+
+        if (!isSplashOverlay || fieldsInited) return;
+
         try {
             // Try to find 'reload' field (ResourceReload)
             for (java.lang.reflect.Field field : instance.getClass().getDeclaredFields()) {
@@ -121,11 +148,12 @@ public class SplashOverlayMixin {
             return;
         }
 
+        initFields(this);
+        if (!isSplashOverlay) return;
+
         if (animationDelayStartTime == -1) {
             animationDelayStartTime = System.currentTimeMillis();
         }
-
-        initFields(this);
 
         long elapsed = System.currentTimeMillis() - animationDelayStartTime;
 
