@@ -1,11 +1,12 @@
 package dev.codeitsduckydev.animatedlogo.mixin;
 
 import dev.codeitsduckydev.animatedlogo.AnimatedLogo;
+import dev.codeitsduckydev.animatedlogo.util.ColorUtils;
+import dev.codeitsduckydev.animatedlogo.util.VersionedRenderer;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.SplashOverlay;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.sound.*;
 import net.minecraft.resource.ResourceReload;
 import net.minecraft.util.Identifier;
@@ -53,7 +54,7 @@ public class SplashOverlayMixin {
     private static IntSupplier LOADING_BORDER = () -> whiteARGB;
 
     @Unique
-    private static IntSupplier TEXT_COLOR = () -> applyAlphaToColor(whiteARGB, 1.0f);
+    private static IntSupplier TEXT_COLOR = () -> ColorUtils.applyAlphaToColor(whiteARGB, 1.0f);
 
 
     @Unique private boolean soundPlayed = false;
@@ -91,8 +92,8 @@ public class SplashOverlayMixin {
         int maxY = progressBarY + 5;
 
         int filled = MathHelper.ceil((float)(maxX - minX - 2) * progress);
-        int colorFilled = applyAlphaToColor(LOADING_FILL.getAsInt(), opacity);
-        int colorOutline = applyAlphaToColor(LOADING_BORDER.getAsInt(), opacity);
+        int colorFilled = ColorUtils.applyAlphaToColor(LOADING_FILL.getAsInt(), opacity);
+        int colorOutline = ColorUtils.applyAlphaToColor(LOADING_BORDER.getAsInt(), opacity);
 
         context.fill(minX + 2, minY + 2, minX + filled, maxY - 2, colorFilled);
         context.fill(minX + 1, minY, maxX - 1, minY + 1, colorOutline);
@@ -110,29 +111,6 @@ public class SplashOverlayMixin {
         animationDelayStartTime = System.currentTimeMillis();
     }
 
-    // Stop rendering of title
-    @ModifyArg(method = "render",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIFFIIIIIII)V", ordinal = 0),
-            index = 7)
-    private int removeText1(int i) {
-        return HAS_LOADED_ONCE ? i : 0;
-    }
-    @ModifyArg(method = "render",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIFFIIIIIII)V", ordinal = 1),
-            index = 7)
-    private int removeText2(int u) {
-        return HAS_LOADED_ONCE ? u : 0;
-    }
-
-    // Stop rendering of loading bar
-    @ModifyArg(method = "render",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/SplashOverlay;renderProgressBar(Lnet/minecraft/client/gui/DrawContext;IIIIF)V", ordinal = 0),
-            index = 5)
-    private float removeBar(float opacity) {
-        return HAS_LOADED_ONCE ? opacity : 0;
-    }
-
-
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void preRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         if (HAS_LOADED_ONCE) {
@@ -142,10 +120,10 @@ public class SplashOverlayMixin {
         long elapsed = System.currentTimeMillis() - animationDelayStartTime;
 
         if (elapsed < ANIMATION_DELAY_MS) {
-            context.fill(RenderPipelines.GUI, 0, 0,
+            VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
                     ColorHelper.withAlpha((int)((elapsed * 255) / ANIMATION_DELAY_MS / 10),
-                            applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f)));
+                            ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f)));
             ci.cancel();
             return;
         }
@@ -166,9 +144,9 @@ public class SplashOverlayMixin {
     private void drawAnimatedIntro(DrawContext context) {
         if (!reload.isComplete() && !isFadingOut && !isFadingFinished) {
 
-            context.fill(RenderPipelines.GUI, 0, 0,
+            VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                    applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+                    ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
 
             drawLoadingBar(context, 1.0f, Math.max(loadingBarProgress, reload.getProgress()));
             loadingBarProgress = reload.getProgress();
@@ -185,9 +163,9 @@ public class SplashOverlayMixin {
             long elapsedFade = System.currentTimeMillis() - fadeOutStartTime;
             float fadeFactor = 1.0f - MathHelper.clamp((float)elapsedFade / FADE_OUT_DURATION_MS, 0.0f, 1.0f);
 
-            context.fill(RenderPipelines.GUI, 0, 0,
+            VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                    applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+                    ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
 
             drawLoadingBar(context, fadeFactor, 1.0f);
             loadingBarProgress = reload.getProgress();
@@ -246,13 +224,14 @@ public class SplashOverlayMixin {
             int frameIndex = count / IMAGE_PER_FRAME / FRAMES_PER_FRAME;
             int subFrameY = 256 * ((count % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
 
-            context.fill(RenderPipelines.GUI, 0, 0,
+            VersionedRenderer.fill(context, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                    applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+                    ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
 
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, frames[frameIndex], x, y,
-                    0, subFrameY, width, height,
-                    1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), 1.0f));
+            VersionedRenderer.setShaderColor(context, 1.0f, 1.0f, 1.0f, 1.0f);
+            VersionedRenderer.drawTexture(context, frames[frameIndex], x, y,
+                    0.0f, (float)subFrameY, width, height,
+                    1024, 1024);
 
         }
     }
@@ -271,9 +250,9 @@ public class SplashOverlayMixin {
         long elapsed = System.currentTimeMillis() - postAnimationFadeStartTime;
         float fade = 1.0f - MathHelper.clamp((float) elapsed / POST_ANIMATION_FADE_DURATION_MS, 0.0f, 1.0f);
 
-        context.fill(RenderPipelines.GUI, 0, 0,
+        VersionedRenderer.fill(context, 0, 0,
                 context.getScaledWindowWidth(), context.getScaledWindowHeight(),
-                applyAlphaToColor(BRAND_ARGB.getAsInt(), fade));
+                ColorUtils.applyAlphaToColor(BRAND_ARGB.getAsInt(), fade));
 
         int screenWidth = context.getScaledWindowWidth();
         int screenHeight = context.getScaledWindowHeight();
@@ -284,50 +263,16 @@ public class SplashOverlayMixin {
         int finalSubFrameY = 256 * ((count % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
 
         Identifier finalFrame = frames[FRAMES - 1];
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, finalFrame, x, y,
-                0, finalSubFrameY, width, height,
-                1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), fade));
+        VersionedRenderer.setShaderColor(context, 1.0f, 1.0f, 1.0f, fade);
+        VersionedRenderer.drawTexture(context, finalFrame, x, y,
+                0.0f, (float)finalSubFrameY, width, height,
+                1024, 1024);
+        VersionedRenderer.setShaderColor(context, 1.0f, 1.0f, 1.0f, 1.0f);
 
         if (fade <= 0.0f) {
             postAnimationFadeDone = true;
             HAS_LOADED_ONCE = true;
             MinecraftClient.getInstance().setOverlay(null);
         }
-    }
-
-    @Inject(method = "render", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/DrawContext;drawTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIFFIIIIIII)V",
-            ordinal = 1, shift = At.Shift.AFTER))
-    private void onAfterRenderLogo(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci,
-                                   @Local(ordinal = 2) int scaledWidth, @Local(ordinal = 3) int scaledHeight,
-                                   @Local(ordinal = 3) float alpha, @Local(ordinal = 4) int x, @Local(ordinal = 5) int y,
-                                   @Local(ordinal = 0) double height, @Local(ordinal = 6) int halfHeight,
-                                   @Local(ordinal = 1) double width, @Local(ordinal = 7) int halfWidth) {
-        if (!animationDone || HAS_LOADED_ONCE) return;
-
-        // Title (last frame)
-        int finalFrameScreenWidth = context.getScaledWindowWidth();
-        int finalFrameScreenHeight = context.getScaledWindowHeight();
-        int finalFrameWidth = finalFrameScreenWidth / 2;
-        int finalFrameHeight = finalFrameWidth * 256 / 1024;
-        int finalFrameX = (finalFrameScreenWidth - finalFrameWidth) / 2;
-        int finalFrameY = (finalFrameScreenHeight - finalFrameHeight) / 2;
-        int finalSubFrameY = 256 * ((count % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
-
-        Identifier finalFrame = frames[FRAMES - 1];
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, finalFrame, finalFrameX, finalFrameY,
-                0, finalSubFrameY, finalFrameWidth, finalFrameHeight,
-                1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), alpha));
-
-        if (alpha <= 0.0f) {
-            HAS_LOADED_ONCE = true;
-        }
-    }
-
-    @Unique
-    private static int applyAlphaToColor(int color, float alpha) {
-        int rgb = color & 0x00FFFFFF;
-        int a = MathHelper.clamp((int)(alpha * 255), 0, 255);
-        return (a << 24) | rgb;
     }
 }
