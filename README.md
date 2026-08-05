@@ -1,29 +1,42 @@
-# Animated Logo
+![Animated Logo Banner](https://i.imgur.com/LvByvHP.png)
 
-This Fabric mod replaces the default **Mojang Studios boot screen** with the **Minecraft Dungeons animated logo** when the game starts.
+<p align="center">
+  <a href="https://discord.gg/ACtMxu2TZS"><img src="https://tr7zw.github.io/uikit/social_buttons_icon/Discord-Button-64.png" alt="Discord"></a>
+  <a href="https://github.com/CodingWithDuckii/Animated-Logo"><img src="https://tr7zw.github.io/uikit/social_buttons_icon/Github-Button-64.png" alt="GitHub"></a>
+  <a href="https://modrinth.com/mod/animated-logo"><img src="https://tr7zw.github.io/uikit/social_buttons_icon/Modrinth-Button-64.png" alt="Modrinth"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/animated-logo"><img src="https://tr7zw.github.io/uikit/social_buttons_icon/Curseforge-Button-64.png" alt="CurseForge"></a>
+</p>
 
-Instead of the standard Mojang intro, the game plays the Dungeons-style logo animation during startup, giving Minecraft a unique and cinematic launch experience.
-
----
-https://www.youtube.com/watch?v=VK63zBqZGKg
----
-
-## ✨ What This Mod Does
-- Replaces the Mojang Studios boot animation
-- Plays the Minecraft Dungeons animated logo on game launch
-- Visual-only change during startup
-- No gameplay, UI, or menu changes
+<br>
 
 ---
 
-## ⚙️ Details
-- **Mod Loader:** Fabric
-- **Type:** Visual / Cosmetic
-- **Affects:** Game startup (boot screen only)
-- 
+# About
+
+Animated Logo replaces Minecraft's default **Mojang Studios** startup screen with the **Minecraft Dungeons animated logo**, giving every launch a more polished and cinematic feeling.
+
+Instead of the traditional red Mojang Studios screen, you'll be greeted by a smooth animated logo inspired by Minecraft Dungeons Intro before the game reaches the main menu.
+
+
+[![Trailer](https://img.youtube.com/vi/VUdqII3civY/maxresdefault.jpg)](https://youtu.be/VUdqII3civY)
+
+**Watch the showcase above!**
+
 ---
 
-## 📦 Installation
-1. Install **Fabric Loader**
-2. Place the mod `.jar` into your `mods` folder
-3. Launch Minecraft
+# Versions and Loaders
+
+| Minecraft | Loader | Status |
+|-----------|--------|--------|
+| 1.21.11 | Fabric | ✅ Supported |
+| 26.1.x | Fabric | ✅ Supported |
+| 26.2 | Fabric | ✅ Supported |
+| 1.21.10 or under | Fabric | ❌ Not Supported |
+
+---
+
+# Credits
+
+👤 Huge thanks to **BouncingElf10** for creating **Animated Mojang Logo**, whose assets and implementation inspired parts of this project.
+
+👤 Thank you to **j0ointekk** for making the Mod logo!
