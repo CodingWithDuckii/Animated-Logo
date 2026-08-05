@@ -70,6 +70,7 @@ public class SplashOverlayMixin {
     @Unique private static float loadingBarProgress = 0.0f; // in seconds
 
     @Unique private static boolean HAS_LOADED_ONCE = false;
+    @Unique private static boolean RELOAD_IN_PROGRESS = false;
 
     // Draw vanilla loading bar
     // Copied from: net.minecraft.client.gui.screen.SplashOverlay.renderProgressBar
@@ -103,11 +104,43 @@ public class SplashOverlayMixin {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void init(MinecraftClient client, ResourceReload monitor, Consumer<Throwable> exceptionHandler, boolean reloading, CallbackInfo ci) {
-        if (HAS_LOADED_ONCE) {
-            LOGGER.warn("Animated Mojang Logo has already been loaded once, skipping initialization.");
+        boolean isInitialLoad = !HAS_LOADED_ONCE;
+        boolean isReload = reloading;
+
+        if (!isInitialLoad && !isReload) {
             return;
         }
+
+        if (isReload) {
+            LOGGER.info("Resource pack reload detected, playing Animated Mojang Logo.");
+            RELOAD_IN_PROGRESS = true;
+            resetAnimationState();
+            isFadingFinished = true;
+        } else {
+            LOGGER.info("Initial load, starting Animated Mojang Logo.");
+        }
+
         animationDelayStartTime = System.currentTimeMillis();
+    }
+
+    @Unique
+    private void resetAnimationState() {
+        animationReady = false;
+        animationDone = false;
+        isFadingOut = false;
+        isFadingFinished = false;
+        animationStartTime = -1;
+        postAnimationFadeStartTime = -1;
+        postAnimationFadeDone = false;
+        fadeOutStartTime = -1;
+        loadingBarProgress = 0.0f;
+        count = 0;
+        f = 0;
+    }
+
+    @Unique
+    private static boolean shouldOverrideVanilla() {
+        return !HAS_LOADED_ONCE || RELOAD_IN_PROGRESS;
     }
 
     // Stop rendering of title
@@ -115,13 +148,13 @@ public class SplashOverlayMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIFFIIIIIII)V", ordinal = 0),
             index = 7)
     private int removeText1(int i) {
-        return HAS_LOADED_ONCE ? i : 0;
+        return shouldOverrideVanilla() ? 0 : i;
     }
     @ModifyArg(method = "render",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTexture(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/util/Identifier;IIFFIIIIIII)V", ordinal = 1),
             index = 7)
     private int removeText2(int u) {
-        return HAS_LOADED_ONCE ? u : 0;
+        return shouldOverrideVanilla() ? 0 : u;
     }
 
     // Stop rendering of loading bar
@@ -129,13 +162,13 @@ public class SplashOverlayMixin {
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/screen/SplashOverlay;renderProgressBar(Lnet/minecraft/client/gui/DrawContext;IIIIF)V", ordinal = 0),
             index = 5)
     private float removeBar(float opacity) {
-        return HAS_LOADED_ONCE ? opacity : 0;
+        return shouldOverrideVanilla() ? 0 : opacity;
     }
 
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void preRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (HAS_LOADED_ONCE) {
+        if (HAS_LOADED_ONCE && !RELOAD_IN_PROGRESS) {
             return;
         }
 
@@ -163,7 +196,40 @@ public class SplashOverlayMixin {
     }
 
     @Unique
+    private void drawLoopingFrame(DrawContext context) {
+        if (!inited || frames == null) {
+            return;
+        }
+
+        int screenWidth = context.getScaledWindowWidth();
+        int screenHeight = context.getScaledWindowHeight();
+        int width = screenWidth / 2;
+        int height = width * 256 / 1024;
+        int x = (screenWidth - width) / 2;
+        int y = (screenHeight - height) / 2;
+
+        long loopTicks = System.currentTimeMillis() / 100L;
+        int totalFrameCount = FRAMES * IMAGE_PER_FRAME * FRAMES_PER_FRAME;
+        int loopingCount = (int)(loopTicks % totalFrameCount);
+
+        int frameIndex = loopingCount / IMAGE_PER_FRAME / FRAMES_PER_FRAME;
+        int subFrameY = 256 * ((loopingCount % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
+
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, frames[frameIndex], x, y,
+                0, subFrameY, width, height,
+                1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), 1.0f));
+    }
+
+    @Unique
     private void drawAnimatedIntro(DrawContext context) {
+        if (!inited) {
+            this.frames = new Identifier[FRAMES];
+            for (int i = 0; i < FRAMES; i++) {
+                this.frames[i] = Identifier.of("animated-mojang-logo", "textures/gui/frame_" + i + ".png");
+            }
+            inited = true;
+        }
+
         if (!reload.isComplete() && !isFadingOut && !isFadingFinished) {
 
             context.fill(RenderPipelines.GUI, 0, 0,
@@ -172,6 +238,8 @@ public class SplashOverlayMixin {
 
             drawLoadingBar(context, 1.0f, Math.max(loadingBarProgress, reload.getProgress()));
             loadingBarProgress = reload.getProgress();
+
+            drawLoopingFrame(context);
 
             return;
         }
@@ -192,6 +260,8 @@ public class SplashOverlayMixin {
             drawLoadingBar(context, fadeFactor, 1.0f);
             loadingBarProgress = reload.getProgress();
 
+            drawLoopingFrame(context);
+
             if (fadeFactor <= 0.0) {
                 isFadingFinished = true;
             }
@@ -209,14 +279,6 @@ public class SplashOverlayMixin {
                 );
                 LOGGER.info("Playing startup sound");
                 soundPlayed = true;
-            }
-
-            if (!inited) {
-                this.frames = new Identifier[FRAMES];
-                for (int i = 0; i < FRAMES; i++) {
-                    this.frames[i] = Identifier.of("animated-mojang-logo", "textures/gui/frame_" + i + ".png");
-                }
-                inited = true;
             }
         }
 
@@ -290,7 +352,10 @@ public class SplashOverlayMixin {
 
         if (fade <= 0.0f) {
             postAnimationFadeDone = true;
-            HAS_LOADED_ONCE = true;
+            if (!HAS_LOADED_ONCE) {
+                HAS_LOADED_ONCE = true;
+            }
+            RELOAD_IN_PROGRESS = false;
             MinecraftClient.getInstance().setOverlay(null);
         }
     }
@@ -303,7 +368,8 @@ public class SplashOverlayMixin {
                                    @Local(ordinal = 3) float alpha, @Local(ordinal = 4) int x, @Local(ordinal = 5) int y,
                                    @Local(ordinal = 0) double height, @Local(ordinal = 6) int halfHeight,
                                    @Local(ordinal = 1) double width, @Local(ordinal = 7) int halfWidth) {
-        if (!animationDone || HAS_LOADED_ONCE) return;
+        if (!animationDone) return;
+        if (HAS_LOADED_ONCE && !RELOAD_IN_PROGRESS) return;
 
         // Title (last frame)
         int finalFrameScreenWidth = context.getScaledWindowWidth();
@@ -320,7 +386,10 @@ public class SplashOverlayMixin {
                 1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), alpha));
 
         if (alpha <= 0.0f) {
-            HAS_LOADED_ONCE = true;
+            if (!HAS_LOADED_ONCE) {
+                HAS_LOADED_ONCE = true;
+            }
+            RELOAD_IN_PROGRESS = false;
         }
     }
 
