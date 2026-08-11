@@ -60,6 +60,7 @@ public class SplashOverlayMixin {
     @Unique private boolean animationReady = false;
     @Unique private boolean isFadingOut = false;
     @Unique private boolean isFadingFinished = false;
+    @Unique private boolean isFadingIn = false;
 
     @Unique private long animationStartTime = -1;
     @Unique private static final float TOTAL_ANIMATION_DURATION = 3.0f; // in seconds
@@ -67,6 +68,8 @@ public class SplashOverlayMixin {
     @Unique private static final long ANIMATION_DELAY_MS = 1;
     @Unique private long fadeOutStartTime = -1;
     @Unique private static final long FADE_OUT_DURATION_MS = 1000; // in milliseconds
+    @Unique private long fadeInStartTime = -1;
+    @Unique private static final long FADE_IN_DURATION_MS = 700;
     @Unique private static float loadingBarProgress = 0.0f; // in seconds
 
     @Unique private static boolean HAS_LOADED_ONCE = false;
@@ -115,7 +118,6 @@ public class SplashOverlayMixin {
             LOGGER.info("Resource pack reload detected, playing Animated Mojang Logo.");
             RELOAD_IN_PROGRESS = true;
             resetAnimationState();
-            isFadingFinished = true;
         } else {
             LOGGER.info("Initial load, starting Animated Mojang Logo.");
         }
@@ -125,14 +127,17 @@ public class SplashOverlayMixin {
 
     @Unique
     private void resetAnimationState() {
+        soundPlayed = false;
         animationReady = false;
         animationDone = false;
         isFadingOut = false;
         isFadingFinished = false;
+        isFadingIn = false;
         animationStartTime = -1;
         postAnimationFadeStartTime = -1;
         postAnimationFadeDone = false;
         fadeOutStartTime = -1;
+        fadeInStartTime = -1;
         loadingBarProgress = 0.0f;
         count = 0;
         f = 0;
@@ -230,7 +235,10 @@ public class SplashOverlayMixin {
             inited = true;
         }
 
-        if (!reload.isComplete() && !isFadingOut && !isFadingFinished) {
+        // Keep the splash deliberately blank while the resource pack is loading.
+        // Rendering the logo here makes the client look frozen because the game
+        // thread can be busy preparing the new resources.
+        if (!reload.isComplete()) {
 
             context.fill(RenderPipelines.GUI, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
@@ -238,48 +246,39 @@ public class SplashOverlayMixin {
 
             drawLoadingBar(context, 1.0f, Math.max(loadingBarProgress, reload.getProgress()));
             loadingBarProgress = reload.getProgress();
-
-            drawLoopingFrame(context);
-
             return;
         }
 
-        if (reload.isComplete() && !isFadingOut && !isFadingFinished) {
-            isFadingOut = true;
-            fadeOutStartTime = System.currentTimeMillis();
-        }
+        // Once loading is complete, reveal the first logo frame before starting
+        // the animation. This makes the transition feel intentional and avoids
+        // showing any logo pixels while resources are still being prepared.
+        if (!animationReady) {
+            if (!isFadingIn) {
+                isFadingIn = true;
+                fadeInStartTime = System.currentTimeMillis();
+            }
 
-        if (isFadingOut && !isFadingFinished) {
-            long elapsedFade = System.currentTimeMillis() - fadeOutStartTime;
-            float fadeFactor = 1.0f - MathHelper.clamp((float)elapsedFade / FADE_OUT_DURATION_MS, 0.0f, 1.0f);
-
+            float fadeFactor = MathHelper.clamp(
+                    (float) (System.currentTimeMillis() - fadeInStartTime) / FADE_IN_DURATION_MS,
+                    0.0f, 1.0f);
             context.fill(RenderPipelines.GUI, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
                     applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
+            drawFrame(context, 0, fadeFactor);
 
-            drawLoadingBar(context, fadeFactor, 1.0f);
-            loadingBarProgress = reload.getProgress();
+            if (fadeFactor >= 1.0f) {
+                animationReady = true;
+                animationStartTime = System.nanoTime();
 
-            drawLoopingFrame(context);
-
-            if (fadeFactor <= 0.0) {
-                isFadingFinished = true;
+                if (!soundPlayed) {
+                    MinecraftClient.getInstance().getSoundManager().play(
+                            PositionedSoundInstance.master(AnimatedLogo.STARTUP_SOUND_EVENT, 1.0F)
+                    );
+                    LOGGER.info("Playing startup sound");
+                    soundPlayed = true;
+                }
             }
-
             return;
-        }
-
-        if (isFadingFinished && !animationReady) {
-            animationReady = true;
-            animationStartTime = System.nanoTime();
-
-            if (!soundPlayed) {
-                MinecraftClient.getInstance().getSoundManager().play(
-                        PositionedSoundInstance.master(AnimatedLogo.STARTUP_SOUND_EVENT, 1.0F)
-                );
-                LOGGER.info("Playing startup sound");
-                soundPlayed = true;
-            }
         }
 
         if (animationReady) {
@@ -298,25 +297,27 @@ public class SplashOverlayMixin {
                 }
             }
 
-            int screenWidth = context.getScaledWindowWidth();
-            int screenHeight = context.getScaledWindowHeight();
-            int width = screenWidth / 2;
-            int height = width * 256 / 1024;
-            int x = (screenWidth - width) / 2;
-            int y = (screenHeight - height) / 2;
-
-            int frameIndex = count / IMAGE_PER_FRAME / FRAMES_PER_FRAME;
-            int subFrameY = 256 * ((count % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
-
             context.fill(RenderPipelines.GUI, 0, 0,
                     context.getScaledWindowWidth(), context.getScaledWindowHeight(),
                     applyAlphaToColor(BRAND_ARGB.getAsInt(), 1.0f));
-
-            context.drawTexture(RenderPipelines.GUI_TEXTURED, frames[frameIndex], x, y,
-                    0, subFrameY, width, height,
-                    1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), 1.0f));
-
+            drawFrame(context, count, 1.0f);
         }
+    }
+
+    @Unique
+    private void drawFrame(DrawContext context, int frameCount, float opacity) {
+        int screenWidth = context.getScaledWindowWidth();
+        int screenHeight = context.getScaledWindowHeight();
+        int width = screenWidth / 2;
+        int height = width * 256 / 1024;
+        int x = (screenWidth - width) / 2;
+        int y = (screenHeight - height) / 2;
+        int frameIndex = MathHelper.clamp(frameCount / IMAGE_PER_FRAME / FRAMES_PER_FRAME, 0, FRAMES - 1);
+        int subFrameY = 256 * ((frameCount % (IMAGE_PER_FRAME * FRAMES_PER_FRAME)) / FRAMES_PER_FRAME);
+
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, frames[frameIndex], x, y,
+                0, subFrameY, width, height,
+                1024, 256, 1024, 1024, applyAlphaToColor(TEXT_COLOR.getAsInt(), opacity));
     }
 
     @Unique

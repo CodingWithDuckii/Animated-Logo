@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "animated-mojang-logo",
-  "version": "1.6",
+  "version": "${version}",
   "name": "Animated Logo",
   "authors": [
     "code_itsduckydev"
