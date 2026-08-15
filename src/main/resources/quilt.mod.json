@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "quilt_loader": {
+    "group": "dev.codeitsduckydev",
+    "id": "animated-mojang-logo",
+    "version": "${version}",
+    "metadata": {
+      "name": "Animated Logo",
+      "description": "Replaces the vanilla Minecraft splash screen with an animated logo.",
+      "contributors": {
+        "code_itsduckydev": "Owner"
+      },
+      "icon": "assets/animated-mojang-logo/icon.png"
+    },
+    "intermediate_mappings": "net.fabricmc:intermediary",
+    "entrypoints": {
+      "init": "dev.codeitsduckydev.animatedlogo.AnimatedLogo"
+    },
+    "depends": [
+      {
+        "id": "quilt_loader",
+        "versions": ">=0.28.0"
+      },
+      {
+        "id": "minecraft",
+        "versions": ">=1.21.11"
+      }
+    ]
+  },
+  "mixin": "animated-logo.mixins.json"
+}

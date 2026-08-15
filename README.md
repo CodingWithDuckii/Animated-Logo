@@ -29,6 +29,7 @@ Instead of the traditional red Mojang Studios screen, you'll be greeted by a smo
 | Minecraft | Loader | Status |
 |-----------|--------|--------|
 | 1.21.11 | Fabric | ✅ Supported |
+| 1.21.11 | Quilt | ✅ Fabric-compatible build |
 | 26.1.x | Fabric | ✅ Supported |
 | 26.2 | Fabric | ✅ Supported |
 | 1.21.10 or under | Fabric | ❌ Not Supported |
