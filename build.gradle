@@ -3,6 +3,55 @@ plugins {
     id 'maven-publish'
 }
 
+// ============================================================
+// Multi-version build
+// ------------------------------------------------------------
+// The target Minecraft version is selected with -PmcVersion=<id>
+// (default: gradle.properties -> mcVersion). Each <id> maps to a
+// properties file under versions/<id>.properties that pins the
+// exact Minecraft / yarn / loader / fabric-api versions and the
+// code variants to use (mixin_variant + widget_variant).
+//
+// Rendering eras of DrawContext:
+//   legacy  <=1.21.1  drawTexture(Identifier, ...) with setShaderColor
+//   middle  1.21.2+   drawTexture(Function<Identifier, RenderLayer>, ...)
+//   modern  1.21.6+   drawTexture(RenderPipeline, ...)
+// Widget click handling:
+//   legacy  <=1.21.8  onClick(double, double)
+//   modern  1.21.10+  onClick(Click, boolean)
+//
+// minecraft_version_range values use Fabric loader version-predicate syntax
+// (e.g. ">=1.21.2 <1.21.6", space-separated terms are ANDed). Do NOT use
+// Modrinth-style [a,b) bracket ranges: the loader silently never matches them.
+// ============================================================
+def mcVersionId = providers.gradleProperty('mcVersion').get()
+def versionProps = new Properties()
+def versionFile = file("versions/${mcVersionId}.properties")
+if (!versionFile.isFile()) {
+    throw new GradleException(
+        "Unknown mcVersion '${mcVersionId}'. Expected a file versions/${mcVersionId}.properties " +
+        "(e.g. -PmcVersion=1.21.1). Supported ids: " +
+        fileTree('versions').files.name.collect { it.replace('.properties', '') }.sort().join(', '))
+}
+versionFile.withInputStream { versionProps.load(it) }
+
+def mcVersion = versionProps.getProperty('minecraft_version')
+def yarnMappings = versionProps.getProperty('yarn_mappings')
+def loaderVersion = versionProps.getProperty('loader_version')
+def fabricVersion = versionProps.getProperty('fabric_version')
+def mcVersionRange = versionProps.getProperty('minecraft_version_range')
+def mixinVariant = versionProps.getProperty('mixin_variant', 'modern')
+def widgetVariant = versionProps.getProperty('widget_variant', 'modern')
+def targetJavaVersion = Integer.parseInt(versionProps.getProperty('java_release', '21'))
+
+// Version-specific classes live in per-variant source dirs (src/mixin-<v>,
+// src/widget-<v>); everything else lives in src/shared. The active variants
+// are chosen by swapping the source dirs.
+def mainJavaDirs = ['src/shared/java', "src/mixin-${mixinVariant}/java", "src/widget-${widgetVariant}/java"]
+def mainResourceDirs = ['src/shared/resources']
+sourceSets.main.java.setSrcDirs(mainJavaDirs)
+sourceSets.main.resources.setSrcDirs(mainResourceDirs)
+
 version = project.mod_version
 group = project.maven_group
 
@@ -23,33 +72,35 @@ repositories {
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    // To change the versions see the versions/ folder and gradle.properties
+    minecraft "com.mojang:minecraft:${mcVersion}"
+    mappings "net.fabricmc:yarn:${yarnMappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${loaderVersion}"
     // Fabric API. This is technically optional, but you probably want it anyway.
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
 
 }
 
 processResources {
     inputs.property "version", project.version
-    inputs.property "minecraft_version", project.minecraft_version
-    inputs.property "loader_version", project.loader_version
+    inputs.property "minecraft_version", mcVersion
+    inputs.property "minecraft_version_range", mcVersionRange
+    inputs.property "loader_version", loaderVersion
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
-                "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+                "minecraft_version": mcVersion,
+                "minecraft_version_range": mcVersionRange,
+                "loader_version": loaderVersion
     }
 
     filesMatching("quilt.mod.json") {
-        expand "version": project.version
+        expand "version": project.version,
+                "minecraft_version_range": mcVersionRange
     }
 }
 
-def targetJavaVersion = 21
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly
@@ -97,5 +148,7 @@ publishing {
 }
 
 loom {
-    accessWidenerPath = file("src/main/resources/animated-logo.accesswidener")
+    // No code accesses the widened members anymore; a header-only widener
+    // is valid on every supported version.
+    accessWidenerPath = file('src/shared/resources/animated-logo.accesswidener')
 }

@@ -1,7 +1,7 @@
-# Automatically build the project and run any configured tests for every push
-# and submitted pull request. This can help catch issues that only occur on
-# certain platforms or Java versions, and provides a first line of defence
-# against bad commits.
+# Automatically build the project for every supported Minecraft version and
+# run any configured tests for every push and submitted pull request.
+# This can help catch issues that only occur on certain platforms or Java
+# versions, and provides a first line of defence against bad commits.
 
 name: build
 on: [pull_request, push]
@@ -10,28 +10,27 @@ jobs:
   build:
     strategy:
       matrix:
-        # Use these Java versions
-        java: [
-          21,    # Current Java LTS
-        ]
+        # Minecraft versions with published yarn mappings.
+        # 1.21.9 is skipped: Fabric never released yarn for it.
+        # 26.x is skipped: yarn mappings are not published yet.
+        mc: [1.21.1, 1.21.2, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.7, 1.21.8, 1.21.10, 1.21.11]
     runs-on: ubuntu-22.04
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
       - name: validate gradle wrapper
         uses: gradle/wrapper-validation-action@v2
-      - name: setup jdk ${{ matrix.java }}
+      - name: setup jdk 21
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ matrix.java }}
+          java-version: 21
           distribution: 'microsoft'
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
-      - name: build
-        run: ./gradlew build
+      - name: build for Minecraft ${{ matrix.mc }}
+        run: ./gradlew build -PmcVersion=${{ matrix.mc }}
       - name: capture build artifacts
-        if: ${{ matrix.java == '21' }} # Only upload artifacts built from latest java
         uses: actions/upload-artifact@v4
         with:
-          name: Artifacts
+          name: Animated-Logo-${{ matrix.mc }}
           path: build/libs/

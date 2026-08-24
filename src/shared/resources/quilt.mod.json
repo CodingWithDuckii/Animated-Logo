@@ -23,7 +23,7 @@
       },
       {
         "id": "minecraft",
-        "versions": ">=1.21.11"
+        "versions": "${minecraft_version_range}"
       }
     ]
   },

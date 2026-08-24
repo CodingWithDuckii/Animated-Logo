@@ -28,13 +28,14 @@ Instead of the traditional red Mojang Studios screen, you'll be greeted by a smo
 
 | Minecraft | Loader | Status |
 |-----------|--------|--------|
-| 1.21.11 | Fabric | ✅ Supported |
-| 1.21.11 | Quilt | ✅ Fabric-compatible build |
-| 26.1.x | Fabric | ✅ Supported |
-| 26.2 | Fabric | ✅ Supported |
-| 1.21.10 or under | Fabric | ❌ Not Supported |
-
----
+| 1.21.1 | Fabric | ✅ Supported (legacy build, range `1.21.1`) |
+| 1.21.1 | Quilt | ✅ Fabric-compatible build |
+| 1.21.2 – 1.21.5 | Fabric | ✅ Supported (middle build, range `>=1.21.2 <1.21.6`) |
+| 1.21.6 – 1.21.8 | Fabric | ✅ Supported (modern build, range `>=1.21.6 <1.21.10`) |
+| 1.21.9 | Fabric | ⚠️ Not buildable |
+| 1.21.10 – 1.21.11 | Fabric | ✅ Supported (latest build, range `>=1.21.10`) |
+| 1.21.10 – 1.21.11 | Quilt | ✅ Fabric-compatible build |
+| 26.x | Fabric | ⚠️ Planned |
 
 # Credits
 
