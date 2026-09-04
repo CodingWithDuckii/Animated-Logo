@@ -4,7 +4,9 @@
   "package": "dev.codeitsduckydev.animatedlogo.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "SplashOverlayMixin"
+    "SplashOverlayMixin",
+    "ScreenAccessor",
+    "TitleScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

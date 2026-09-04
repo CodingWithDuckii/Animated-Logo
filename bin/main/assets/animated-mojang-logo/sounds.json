@@ -3,5 +3,10 @@
     "sounds": [
       "animated-mojang-logo:startup"
     ]
+  },
+  "toast": {
+    "sounds": [
+      "animated-mojang-logo:toast"
+    ]
   }
 }

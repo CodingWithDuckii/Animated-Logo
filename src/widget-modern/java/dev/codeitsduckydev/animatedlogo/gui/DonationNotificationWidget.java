@@ -5,7 +5,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.widget.ClickableWidget;
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import dev.codeitsduckydev.animatedlogo.DonationConfig;
+import dev.codeitsduckydev.animatedlogo.ModConfig;
 import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 
@@ -84,7 +84,8 @@ public final class DonationNotificationWidget extends ClickableWidget {
         int localY = (int) click.y() - getY();
         if (localX >= width - 24 && localY < 28) {
             this.visible = false;
-            DonationConfig.setDismissed();
+            this.active = false;
+            ModConfig.get().setShowDonationNotification(false);
             return;
         }
         if (localX >= BUTTON_X && localX < BUTTON_X + BUTTON_WIDTH

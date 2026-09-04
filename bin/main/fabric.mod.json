@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "animated-mojang-logo",
-  "version": "1.2",
+  "version": "${version}",
   "name": "Animated Logo",
   "authors": [
     "code_itsduckydev"
@@ -19,16 +19,22 @@
   "entrypoints": {
     "main": [
       "dev.codeitsduckydev.animatedlogo.AnimatedLogo"
+    ],
+    "modmenu": [
+      "dev.codeitsduckydev.animatedlogo.ModMenuIntegration"
     ]
   },
   "mixins": [
     "animated-logo.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.18.4",
-    "minecraft": ">=1.21.11",
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version_range}",
     "java": ">=21",
     "fabric-api": "*"
+  },
+  "suggests": {
+    "modmenu": "*"
   },
   "accessWidener" : "animated-logo.accesswidener"
 }

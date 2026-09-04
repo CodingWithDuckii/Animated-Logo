@@ -1,6 +1,8 @@
 package dev.codeitsduckydev.animatedlogo.mixin;
 
 import dev.codeitsduckydev.animatedlogo.AnimatedLogo;
+import dev.codeitsduckydev.animatedlogo.AnimatedLogoRecorder;
+import dev.codeitsduckydev.animatedlogo.ModConfig;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -114,6 +116,17 @@ public class SplashOverlayMixin {
             return;
         }
 
+        // Config gating: only take over this splash when the matching option is
+        // enabled; an active recording playback always forces the animation on.
+        if (!AnimatedLogoRecorder.isPlaybackActive()) {
+            boolean allowed = isReload
+                    ? ModConfig.get().animateOnResourceReload()
+                    : ModConfig.get().animateOnStartup();
+            if (!allowed) {
+                return;
+            }
+        }
+
         if (isReload) {
             LOGGER.info("Resource pack reload detected, playing Animated Mojang Logo.");
             RELOAD_IN_PROGRESS = true;
@@ -145,7 +158,11 @@ public class SplashOverlayMixin {
 
     @Unique
     private static boolean shouldOverrideVanilla() {
-        return !HAS_LOADED_ONCE || RELOAD_IN_PROGRESS;
+        if (AnimatedLogoRecorder.isPlaybackActive()) {
+            return true;
+        }
+        return (!HAS_LOADED_ONCE && ModConfig.get().animateOnStartup())
+                || (RELOAD_IN_PROGRESS && ModConfig.get().animateOnResourceReload());
     }
 
     // Stop rendering of title
@@ -177,6 +194,17 @@ public class SplashOverlayMixin {
             return;
         }
 
+        // Config gating for splashes the constructor hook did not see (e.g. the
+        // startup splash when the option was flipped on while already booted):
+        // when the animation is disabled, leave the vanilla splash untouched.
+        if (!AnimatedLogoRecorder.isPlaybackActive()) {
+            boolean startupAllowed = !HAS_LOADED_ONCE && ModConfig.get().animateOnStartup();
+            boolean reloadAllowed = RELOAD_IN_PROGRESS && ModConfig.get().animateOnResourceReload();
+            if (!startupAllowed && !reloadAllowed) {
+                return;
+            }
+        }
+
         long elapsed = System.currentTimeMillis() - animationDelayStartTime;
 
         if (elapsed < ANIMATION_DELAY_MS) {
@@ -190,12 +218,14 @@ public class SplashOverlayMixin {
 
         if (!animationDone) {
             drawAnimatedIntro(context);
+            AnimatedLogoRecorder.captureFrame();
             ci.cancel();
             return;
         }
 
         if (!postAnimationFadeDone) {
             drawPostAnimationFade(context, mouseX, mouseY, delta);
+            AnimatedLogoRecorder.captureFrame();
             ci.cancel();
         }
     }
@@ -270,7 +300,7 @@ public class SplashOverlayMixin {
                 animationReady = true;
                 animationStartTime = System.nanoTime();
 
-                if (!soundPlayed) {
+                if (!soundPlayed && ModConfig.get().playStartupSound()) {
                     MinecraftClient.getInstance().getSoundManager().play(
                             PositionedSoundInstance.master(AnimatedLogo.STARTUP_SOUND_EVENT, 1.0F)
                     );
@@ -358,6 +388,7 @@ public class SplashOverlayMixin {
             }
             RELOAD_IN_PROGRESS = false;
             MinecraftClient.getInstance().setOverlay(null);
+            AnimatedLogoRecorder.onSplashAnimationFinished();
         }
     }
 

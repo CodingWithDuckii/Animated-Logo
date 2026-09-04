@@ -43,6 +43,7 @@ def mcVersionRange = versionProps.getProperty('minecraft_version_range')
 def mixinVariant = versionProps.getProperty('mixin_variant', 'modern')
 def widgetVariant = versionProps.getProperty('widget_variant', 'modern')
 def targetJavaVersion = Integer.parseInt(versionProps.getProperty('java_release', '21'))
+def modMenuVersion = versionProps.getProperty('modmenu_version', '')
 
 // Version-specific classes live in per-variant source dirs (src/mixin-<v>,
 // src/widget-<v>); everything else lives in src/shared. The active variants
@@ -66,6 +67,11 @@ repositories {
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
+    mavenCentral()
+    maven {
+        name = 'TerraformersMC'
+        url = 'https://maven.terraformersmc.com/releases'
+    }
     flatDir {
         dirs 'libs'
     }
@@ -79,6 +85,24 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricVersion}"
 
+    // Mod Menu is only needed at compile time (ModMenuApi entrypoint); at
+    // runtime it is optional and never hard-required.
+    if (modMenuVersion) {
+        modCompileOnly "com.terraformersmc:modmenu:${modMenuVersion}"
+    }
+
+    // JCodec (pure-Java H.264/MP4) encodes the recorded intro video.
+    // Both jars are embedded into the mod (jar-in-jar) via include(). The
+    // transitive jcodec copy of jcodec-javase is excluded so it is not
+    // nested twice under the same META-INF/jars path.
+    implementation "org.jcodec:jcodec:0.2.5"
+    include "org.jcodec:jcodec:0.2.5"
+    implementation("org.jcodec:jcodec-javase:0.2.5") {
+        exclude group: "org.jcodec", module: "jcodec"
+    }
+    include("org.jcodec:jcodec-javase:0.2.5") {
+        exclude group: "org.jcodec", module: "jcodec"
+    }
 }
 
 processResources {

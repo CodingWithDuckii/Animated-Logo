@@ -1,6 +1,5 @@
 package dev.codeitsduckydev.animatedlogo;
 
-import dev.codeitsduckydev.animatedlogo.gui.DevNoticeScreen;
 import dev.codeitsduckydev.animatedlogo.gui.DonationNotificationWidget;
 import dev.codeitsduckydev.animatedlogo.mixin.ScreenAccessor;
 import net.fabricmc.api.ModInitializer;
@@ -31,16 +30,14 @@ public class AnimatedLogo implements ModInitializer {
         Registry.register(Registries.SOUND_EVENT, STARTUP_SOUND_ID, STARTUP_SOUND_EVENT);
         Registry.register(Registries.SOUND_EVENT, DONATION_TOAST_SOUND_ID, DONATION_TOAST_SOUND_EVENT);
 
-        // Show the developer notice every launch, the first time the title
-        // screen appears (i.e. after the boot animation finishes) -- unless
-        // the player has opted out via the "Don't show this again" checkbox.
-        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if (screen instanceof TitleScreen && !DevNoticeConfig.isDisabled()) {
-                client.setScreen(new DevNoticeScreen(screen));
-            }
+        // Remove any temp frames left behind by an interrupted recording.
+        AnimatedLogoRecorder.cleanupTmpDir();
 
+        // Show the donation notification on the title screen (i.e. after the
+        // boot animation finishes), unless the player dismissed it.
+        ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof TitleScreen titleScreen
-                    && !DonationConfig.isDismissed()
+                    && ModConfig.get().showDonationNotification()
                     && titleScreen.children().stream().noneMatch(child -> child instanceof DonationNotificationWidget)) {
                 DonationNotificationWidget notification = new DonationNotificationWidget(
                         Math.max(8, scaledWidth - 238), 8);
